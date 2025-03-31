@@ -1,0 +1,33 @@
+# 通用忽略规则
+
+# 操作系统生成的文件
+.DS_Store          # macOS 系统文件
+Thumbs.db          # Windows 缩略图缓存
+
+# 编辑器/IDE 配置文件
+.idea/             # JetBrains IDE（如 PyCharm）
+.vscode/           # Visual Studio Code
+*.sublime-project  # Sublime Text
+
+# 编译产物和依赖目录
+__pycache__/       # Python 缓存文件
+*.pyc
+*.pyo
+*.pyd
+build/
+dist/
+*.egg-info/
+
+# 虚拟环境目录
+venv/              # Python 虚拟环境
+env/
+.venv/
+
+# 日志文件
+*.log
+logs/
+
+# 敏感文件（如密钥、配置文件）
+.env
+*.key
+*.cert

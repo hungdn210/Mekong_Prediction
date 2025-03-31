@@ -1,0 +1,42 @@
+
+        \begin{table*}
+        \caption{The cross prediction results from PatchTST.}
+        \label{PatchTST_cross_pred}
+        \small
+        \centering
+        \setlength{\tabcolsep}{1mm}
+        \begin{tabular}{@{}c|c|c|c@{}}
+        \toprule
+        Station & RMSE & MSE & MAE \\ \midrule
+        
+            Stung Treng & 0.53 & 0.28 & 0.47 \\ \midrule
+            Kratie & 2.29 & 5.22 & 1.99 \\ \midrule
+            Kompong Cham & 1.74 & 3.01 & 1.62 \\ \midrule
+            Phnom Penh Port & 0.26 & 0.07 & 0.22 \\ \midrule
+            Chaktomuk & 0.08 & 0.01 & 0.06 \\ \midrule
+            Lumphat & 0.53 & 0.28 & 0.29 \\ \midrule
+            Ban Don & 27.43 & 752.50 & 24.87 \\ \midrule
+            Luang Prabang & 2.54 & 6.47 & 2.42 \\ \midrule
+            Chiang Khan & 1.70 & 2.89 & 1.59 \\ \midrule
+            Vientiane KM4 & 0.85 & 0.73 & 0.72 \\ \midrule
+            Nong Khai & 0.43 & 0.19 & 0.37 \\ \midrule
+            Pakse & 0.43 & 0.18 & 0.38 \\ \midrule
+            Ban Pak Kanhoung & 1.07 & 1.14 & 0.92 \\ \midrule
+            Ban Kengdone & 1.60 & 2.56 & 1.46 \\ \midrule
+            Chiang Saen & 0.17 & 0.03 & 0.12 \\ \midrule
+            Nakhon Phanom & 0.29 & 0.09 & 0.20 \\ \midrule
+            Mukdahan & 0.19 & 0.04 & 0.16 \\ \midrule
+            Khong Chiam & 0.54 & 0.30 & 0.36 \\ \midrule
+            Tan Chau & 0.09 & 0.01 & 0.07 \\ \midrule
+            Chau Doc & 0.14 & 0.02 & 0.11 \\ \midrule
+            Vam Nao & 0.14 & 0.02 & 0.11 \\ \midrule
+            My Thuan & 0.43 & 0.19 & 0.34 \\ \midrule
+            Can Tho & 0.33 & 0.11 & 0.25 \\ \midrule
+            Kontum & 0.33 & 0.11 & 0.16 \\ \midrule
+            Duc Xuyen & 0.35 & 0.12 & 0.25 \\ \midrule
+            Vam Kenh & 0.24 & 0.06 & 0.15 \\ \midrule
+            Phung Hiep & 0.09 & 0.01 & 0.05 \\ \midrule
+            Avg & 1.66 & 28.76 & 1.47 \\ \midrule
+        \end{tabular}
+        \end{table*}
+        

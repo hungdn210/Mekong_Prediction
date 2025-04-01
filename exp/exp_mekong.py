@@ -18,12 +18,15 @@ warnings.filterwarnings('ignore')
 class Exp_MeKong(Exp_Basic):
     def __init__(self, args, verbose=True):
         super(Exp_MeKong, self).__init__(args, verbose=verbose)
+        self.device = self._acquire_device()
+        self.model = self._build_model()
 
     def _build_model(self):
         model = self.model_dict[self.args.model].Model(self.args).float()
 
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = nn.DataParallel(model, device_ids=self.args.device_ids)
+        model = model.to(self.device)
         return model
 
     def _get_data(self, flag):

@@ -28,7 +28,7 @@ stations=(
   'Mukdahan' \
   'Khong Chiam' \
   'Kontum' \
-  'Duc Xuyen' \
+  'Duc Xuyen'
 )
 
 seq_len=365

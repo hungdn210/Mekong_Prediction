@@ -37,7 +37,7 @@ class Model(nn.Module):
         # Decoder
         self.projection = nn.Linear(configs.d_model, configs.pred_len, bias=True)
 
-    def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
+    def forward(self, x_enc):
         # Normalization from Non-stationary Transformer
         means = x_enc.mean(1, keepdim=True).detach()
         x_enc = x_enc - means
@@ -47,7 +47,7 @@ class Model(nn.Module):
         _, _, N = x_enc.shape
 
         # Embedding
-        enc_out = self.enc_embedding(x_enc, x_mark_enc)
+        enc_out = self.enc_embedding(x_enc)
         enc_out, attns = self.encoder(enc_out, attn_mask=None)
 
         dec_out = self.projection(enc_out).permute(0, 2, 1)[:, :, :N]

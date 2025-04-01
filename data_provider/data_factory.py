@@ -1,8 +1,8 @@
-from data_provider.data_loader import Dataset_mekong, Dataset_mekong_cross
+from data_provider.data_loader import Dataset_mekong, Dataset_mekong_cross, Dataset_mekong_phase_a
 from torch.utils.data import DataLoader
 
 data_dict = {
-    'MeKong': Dataset_mekong,
+    'MeKong': Dataset_mekong_phase_a,
     'MeKong_Cross': Dataset_mekong_cross
 }
 

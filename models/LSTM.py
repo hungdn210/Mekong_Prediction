@@ -16,7 +16,7 @@ class Model(nn.Module):
                                   num_layers=self.e_layers, dropout=self.dropout)
         self.project = nn.Linear(self.hidden_size, self.pred_len)
 
-    def forward(self, x_enc, x_mark=None, y=None, y_mark=None):
+    def forward(self, x_enc):
         x_enc = x_enc.permute(0, 2, 1)
 
         x_out = self.base_model(x_enc)

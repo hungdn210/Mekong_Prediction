@@ -1,6 +1,7 @@
 from utils.configs import BasicConfigs
 from utils.constants import Constants
 from exp.exp_mekong import Exp_MeKong
+from exp.exp_mekong_phase_a import Exp_MeKong as Exp_MeKong_phase_a
 import time
 
 
@@ -60,7 +61,7 @@ class MeKongWaterLevelPrediction:
         self.args.data1_path = data1_path
         self.args.data2_path = data2_path
         # exp setting
-        exp = Exp_MeKong(self.args, verbose)
+        exp = Exp_MeKong_phase_a(self.args, verbose)
         setting = '{}_{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}'.format(
             self.args.model,
             self.args.data,
@@ -86,39 +87,6 @@ class MeKongWaterLevelPrediction:
         if verbose:
             print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n'.format(setting))
         exp.test(setting)
-
-    def run_all_tasks(self):
-        self.args.model_default_configs(self.args.model)
-        self._print_properties(self.args)
-
-        all_tasks = []
-        for station1 in self._all_stations:
-            station2 = None
-            all_tasks.append((station1, station2))
-        for station1, station2 in self._cross_list:
-            all_tasks.append((station1, station2))
-
-        print(f"Start to run {len(self._all_stations)} stations and {len(self._cross_list)} cross stations")
-        print(f"Overall {len(all_tasks)} tasks")
-        start_time = time.time()
-        task_time = None
-        all_duration = 0
-        completed_count = 0
-        for station1, station2 in all_tasks:
-            # run each task
-            self.station_run(station1, station2, verbose=False)
-            # count completed tasks, calc time
-            completed_count += 1
-            if task_time is None:
-                task_time = start_time
-            duration = time.time() - task_time
-            all_duration = time.time() - start_time
-            print(f"Progress: {completed_count}/{len(all_tasks)}, "
-                  f"task duration: {duration:.2f}s, "
-                  f"all duration: {all_duration:.2f}s\n")
-            task_time = time.time()
-
-        print(f"All tasks finished! All time consumed: {all_duration:.2f}s")
 
     def run_all_stations(self):
         self.args.model_default_configs(self.args.model)
@@ -151,37 +119,7 @@ class MeKongWaterLevelPrediction:
 
         print(f"All tasks finished! All time consumed: {all_duration:.2f}s")
 
-    def run_all_cross_stations(self):
-        self.args.model_default_configs(self.args.model)
-        self._print_properties(self.args)
-
-        all_tasks = []
-        for station1, station2 in self._cross_list:
-            all_tasks.append((station1, station2))
-
-        print(f"Start to run {len(self._cross_list)} cross stations")
-        print(f"Overall {len(all_tasks)} tasks")
-        start_time = time.time()
-        task_time = None
-        all_duration = 0
-        completed_count = 0
-        for station1, station2 in all_tasks:
-            # run each task
-            self.station_run(station1, station2, verbose=False)
-            # count completed tasks, calc time
-            completed_count += 1
-            if task_time is None:
-                task_time = start_time
-            duration = time.time() - task_time
-            all_duration = time.time() - start_time
-            print(f"Progress: {completed_count}/{len(all_tasks)}, "
-                  f"task duration: {duration:.2f}s, "
-                  f"all duration: {all_duration:.2f}s\n")
-            task_time = time.time()
-
-        print(f"All tasks finished! All time consumed: {all_duration:.2f}s")
-
 
 if __name__ == '__main__':
     forecast = MeKongWaterLevelPrediction()
-    forecast.run_all_tasks()
+    forecast.station_run('Chiang Saen')

@@ -2,39 +2,32 @@ export CUDA_VISIBLE_DEVICES=0
 
 model_name=LSTM
 
-stations=('Chroy Chang Var' \
-'Kompong Cham' \
-'Chaktomuk' \
-'Chantangoy' \
-'Ban Kamphun' \
-'Battambang' \
-'Vientiane KM4' \
-'Ban Pak Kanhoung' \
-'Ban Na Luang' \
-'Chiang Saen' \
-'Ban Huai Yano Mai' \
-'Ban Tha Ton' \
-'Ban Tha Mai Liam' \
-'Ban Pak Huai' \
-'Yasothom' \
-'Ban Chot' \
-'Ban Nong Kiang' \
-'Ban Tad Ton' \
-'Ban Huai Khayuong' \
-'Cau 14 (Buon Bur)' \
-'Stung Treng' \
-'Kratie' \
-'Lumphat' \
-'Pakse' \
-'Ban Kengdone' \
-'Chiang Khan' \
-'Nong Khai' \
-'Nakhon Phanom' \
-'Mukdahan' \
-'Khong Chiam' \
-'Kontum' \
-'Duc Xuyen' \
-'Ban Don')
+stations=('Kompong Cham' \
+  'Chaktomuk' \
+  'Vientiane KM4' \
+  'Ban Pak Kanhoung' \
+  'Ban Na Luang' \
+  'Chiang Saen' \
+  'Ban Huai Yano Mai' \
+  'Ban Tha Ton' \
+  'Ban Tha Mai Liam' \
+  'Ban Pak Huai' \
+  'Yasothon' \
+  'Ban Chot' \
+  'Ban Nong Kiang' \
+  'Ban Tad Ton' \
+  'Ban Huai Khayuong' \
+  'Cau 14 (Buon Bur)' \
+  'Stung Treng' \
+  'Pakse' \
+  'Ban Kengdone' \
+  'Chiang Khan' \
+  'Nong Khai' \
+  'Nakhon Phanom' \
+  'Mukdahan' \
+  'Khong Chiam' \
+  'Kontum' \
+  'Duc Xuyen')
 
 seq_len=365
 pred_len=30

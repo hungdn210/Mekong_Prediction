@@ -2,69 +2,71 @@ class Constants:
     def __init__(self):
         # constants
         self._water_flow_dict = {
-            "Stung Treng": [
-                "Kratie"
+            "Ban Chot": [
+                "Ban Tad Ton",
+                "Ban Nong Kiang"
             ],
-            "Kratie": [
-                "Kompong Cham"
-            ],
-            "Kompong Cham": [],
-            "Phnom Penh Port": [],
-            "Chaktomuk": [
-                "Phnom Penh Port"
-            ],
-            "Lumphat": [
-                "Ban Don"
-            ],
-            "Luang Prabang": [
-                "Chiang Khan"
-            ],
-            "Vientiane KM4": [
-                "Nong Khai"
-            ],
-            "Pakse": [
-                "Stung Treng"
-            ],
-            "Ban Pak Kanhoung": [],
+            "Ban Huai Khayuong": [],
+            "Ban Huai Yano Mai": [],
             "Ban Kengdone": [],
-            "Chiang Saen": [
-                "Luang Prabang"
+            "Ban Na Luang": [],
+            "Ban Nong Kiang": [],
+            "Ban Pak Huai": [],
+            "Ban Pak Kanhoung": [
+                "Ban Na Luang"
             ],
+            "Ban Tad Ton": [],
+            "Ban Tha Mai Liam": [],
+            "Ban Tha Ton": [],
+            "Cau 14 (Buon Bur)": [
+                "Duc Xuyen"
+            ],
+            "Chaktomuk": [],
             "Chiang Khan": [
                 "Vientiane KM4"
+            ],
+            "Chiang Saen": [
+                "Ban Huai Yano Mai",
+                "Ban Tha Ton",
+                "Ban Tha Mai Liam",
+                "Ban Pak Huai",
+                "Chiang Khan"
+            ],
+            "Duc Xuyen": [],
+            "Khong Chiam": [
+                "Yasothon",
+                "Pakse"
+            ],
+            "Kompong Cham": [
+                "Chaktomuk"
+            ],
+            "Kontum": [],
+            "Mukdahan": [
+                "Ban Kengdone",
+                "Khong Chiam"
+            ],
+            "Nakhon Phanom": [
+                "Mukdahan"
             ],
             "Nong Khai": [
                 "Ban Pak Kanhoung",
                 "Nakhon Phanom"
             ],
-            "Nakhon Phanom": [
-                "Mukdahan"
+            "Pakse": [
+                "Ban Huai Khayuong",
+                "Stung Treng"
             ],
-            "Mukdahan": [
-                "Ban Kengdone",
-                "Khong Chiam"
+            "Stung Treng": [
+                "Kontum",
+                "Cau 14 (Buon Bur)",
+                "Kompong Cham"
             ],
-            "Khong Chiam": [
-                "Pakse"
+            "Vientiane KM4": [
+                "Nong Khai"
             ],
-            "Tan Chau": [
-                "Chau Doc",
-                "Vam Nao",
-                "My Thuan"
-            ],
-            "My Thuan": [],
-            "Chau Doc": [
-                "Can Tho"
-            ],
-            "Can Tho": [],
-            "Kontum": [],
-            "Duc Xuyen": [],
-            "Ban Don": [],
-            "Vam Nao": [
-                "Can Tho"
-            ],
-            "Vam Kenh": [],
-            "Phung Hiep": []
+            "Yasothon": [
+                "Ban Chot"
+            ]
         }
 
         # self._all_stations = (
@@ -75,7 +77,7 @@ class Constants:
         #     'Nong Khai', 'Nakhon Phanom', 'Mukdahan', 'Khong Chiam', 'Kontum', 'Duc Xuyen', 'Ban Don'
         # )
         self._all_stations = [
-            'Kompong Cham', 'Chaktomuk', 'Vientiane KM4', 'Ban Pak Kanhoung', 
+            'Kompong Cham', 'Chaktomuk', 'Vientiane KM4', 'Ban Pak Kanhoung',
             'Ban Na Luang', 'Chiang Saen', 'Ban Huai Yano Mai', 'Ban Tha Ton',
             'Ban Tha Mai Liam', 'Ban Pak Huai', 'Yasothon', 'Ban Chot',
             'Ban Nong Kiang', 'Ban Tad Ton', 'Ban Huai Khayuong',
@@ -89,9 +91,9 @@ class Constants:
             for station2 in self._water_flow_dict[station1]:
                 self._cross_list.append((station1, station2))
 
-        self._training_range = '1989-01-01 00:00:00+00:00 to 1997-12-31 00:00:00+00:00'
-        self._validation_range = '1998-01-01 00:00:00+00:00 to 1999-12-31 00:00:00+00:00'
-        self._testing_range = '2000-09-01 00:00:00+00:00 to 2002-10-31 00:00:00+00:00'
+        self._training_range = '1992-09-01 00:00:00+00:00 to 2016-08-31 00:00:00+00:00'
+        self._validation_range = '2016-09-01 00:00:00+00:00 to 2020-08-31 00:00:00+00:00'
+        self._testing_range = '2020-09-01 00:00:00+00:00 to 2023-09-31 00:00:00+00:00'
 
     @property
     def water_flow_dict(self):

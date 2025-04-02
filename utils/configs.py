@@ -8,11 +8,11 @@ class BasicConfigs:
         self._model = 'Linear'
         # data loader
         self._data = 'MeKong'
-        self._root_path = './dataset/combined_station_data/'
+        self._root_path = './dataset/Filled_Gaps_Data/Water.Level/'
         self._data1_path = 'Stung Treng.csv'
         self._data2_path = 'Kratie.csv'
         self._features = 'M'
-        self._target = 'Water.Level'
+        self._target = 'Value'
         self._freq = 'd'
         self._checkpoints = './checkpoints/'
         self._seq_len = 3

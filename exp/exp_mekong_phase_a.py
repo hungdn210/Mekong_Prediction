@@ -1,5 +1,3 @@
-import gc
-
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from utils.tools import EarlyStopping_mekong_phase_a, adjust_learning_rate, visual
@@ -52,16 +50,19 @@ class Exp_MeKong(Exp_Basic):
             self.models_dic[name].eval()
         with torch.no_grad():
             for i, (wl_x, wd_x, rf_x, wl_y) in enumerate(self.vali_loader):
+                wl_y_has_nan = torch.isnan(wl_y).any().item()
+                if wl_y_has_nan:
+                    continue
                 wl_x = wl_x.float().to(self.device)
                 wl_y = wl_y.float().to(self.device)
                 # encoder - decoder
                 wl_outputs = self.models_dic['water_level'](wl_x)
                 outputs = wl_outputs
-                if wd_x is not None:
+                if not torch.isnan(wd_x).any().item():
                     wd_x = wd_x.float().to(self.device)
                     wd_outputs = self.models_dic['water_discharge'](wd_x)
                     outputs = torch.cat([outputs, wd_outputs], dim=-1)
-                if rf_x is not None:
+                if not torch.isnan(rf_x).any().item():
                     rf_x = rf_x.float().to(self.device)
                     rf_outputs = self.models_dic['water_discharge'](rf_x)
                     outputs = torch.cat([outputs, rf_outputs], dim=-1)
@@ -84,6 +85,8 @@ class Exp_MeKong(Exp_Basic):
         path = os.path.join(self.args.checkpoints, setting)
         if not os.path.exists(path):
             os.makedirs(path)
+        if not os.path.exists(path + '/phase_a/'):
+            os.makedirs(path + '/phase_a/')
 
         time_now = time.time()
 
@@ -101,58 +104,65 @@ class Exp_MeKong(Exp_Basic):
             epoch_time = time.time()
             for i, (wl_x, wd_x, rf_x, wl_y) in enumerate(self.train_loader):
                 outputs = None  # concat 3 channels' output
-                if wl_x is not None:
+                wl_has_nan = torch.isnan(wl_x).any().item()
+                wd_has_nan = torch.isnan(wd_x).any().item()
+                rf_has_nan = torch.isnan(rf_x).any().item()
+                wl_y_has_nan = torch.isnan(wl_y).any().item()
+                if wl_y_has_nan:
+                    continue
+                if not wl_has_nan:
                     self.models_dic['water_level'].train()
                     model_optim_dic['water_level'].zero_grad()
                     wl_x, wl_y = wl_x.float().to(self.device), wl_y.float().to(self.device)
                     wl_outputs = self.models_dic['water_level'](wl_x)
-                    loss = criterion(wl_outputs, wl_y)
-                    train_loss.append(loss.item())
-                    loss.backward(retain_graph=True)
+                    wl_loss = criterion(wl_outputs, wl_y)
+                    wl_loss.backward(retain_graph=True)
                     model_optim_dic['water_level'].step()
                     if outputs is None:
-                        outputs = wl_outputs
+                        outputs = wl_outputs.detach()
                     else:
-                        outputs = torch.cat([outputs, wl_outputs], dim=-1)
-                if wd_x is not None:
+                        outputs = torch.cat([outputs, wl_outputs.detach()], dim=-1)
+                if not wd_has_nan:
                     self.models_dic['water_discharge'].train()
                     model_optim_dic['water_discharge'].zero_grad()
                     wd_x, wl_y = wd_x.float().to(self.device), wl_y.float().to(self.device)
                     wd_outputs = self.models_dic['water_discharge'](wd_x)
-                    loss = criterion(wd_outputs, wl_y)
-                    train_loss.append(loss.item())
-                    loss.backward(retain_graph=True)
+                    wd_loss = criterion(wd_outputs, wl_y)
+                    wd_loss.backward(retain_graph=True)
                     model_optim_dic['water_discharge'].step()
                     if outputs is None:
-                        outputs = wd_outputs
+                        outputs = wd_outputs.detach()
                     else:
-                        outputs = torch.cat([outputs, wd_outputs], dim=-1)
-                if rf_x is not None:
+                        outputs = torch.cat([outputs, wd_outputs.detach()], dim=-1)
+                if not rf_has_nan:
                     self.models_dic['rainfall'].train()
                     model_optim_dic['rainfall'].zero_grad()
                     rf_x, wl_y = rf_x.float().to(self.device), wl_y.float().to(self.device)
                     rf_outputs = self.models_dic['rainfall'](rf_x)
-                    loss = criterion(rf_outputs, wl_y)
-                    train_loss.append(loss.item())
-                    loss.backward(retain_graph=True)
+                    rf_loss = criterion(rf_outputs, wl_y)
+                    rf_loss.backward(retain_graph=True)
                     model_optim_dic['rainfall'].step()
                     if outputs is None:
-                        outputs = rf_outputs
+                        outputs = rf_outputs.detach()
                     else:
-                        outputs = torch.cat([outputs, rf_outputs], dim=-1)
+                        outputs = torch.cat([outputs, rf_outputs.detach()], dim=-1)
                 # if 3 channels are all none, skip this epoch
                 if outputs is None:
                     continue
 
                 iter_count += 1
                 # channel fusion
-                self.models_dic['channel_fusion'].train()
-                model_optim_dic['channel_fusion'].zero_grad()
-                preds = self.models_dic['channel_fusion'](outputs)
-                loss = criterion(preds, wl_y)
-                train_loss.append(loss.item())
-                loss.backward()
-                model_optim_dic['channel_fusion'].step()
+                if outputs.shape[-1] > 1:
+                    self.models_dic['channel_fusion'].train()
+                    model_optim_dic['channel_fusion'].zero_grad()
+                    preds = self.models_dic['channel_fusion'](outputs)
+                    loss = criterion(preds, wl_y)
+                    train_loss.append(loss.item())
+                    loss.backward()
+                    model_optim_dic['channel_fusion'].step()
+                else:
+                    loss = criterion(outputs, wl_y)
+                    train_loss.append(loss.item())
 
                 if self.verbose:
                     if (i + 1) % 100 == 0:
@@ -171,14 +181,18 @@ class Exp_MeKong(Exp_Basic):
             if self.verbose:
                 print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
                     epoch + 1, train_steps, train_loss, vali_loss, test_loss))
-            early_stopping(vali_loss, self.models_dic, path)
+            early_stopping(vali_loss, self.models_dic, path + '/phase_a/')
             if early_stopping.early_stop:
                 if self.verbose:
                     print("Early stopping")
                 break
 
             for name in self.models_dic.keys():
-                adjust_learning_rate(model_optim_dic[name], epoch + 1, self.args, self.verbose)
+                if name in ['channel_fusion']:
+                    verbose = self.verbose
+                else:
+                    verbose = False
+                adjust_learning_rate(model_optim_dic[name], epoch + 1, self.args, verbose)
 
         for name in self.models_dic.keys():
             ckpt_name = f'checkpoint_{name}.pth'
@@ -209,16 +223,19 @@ class Exp_MeKong(Exp_Basic):
             self.models_dic[name].eval()
         with torch.no_grad():
             for i, (wl_x, wd_x, rf_x, wl_y) in enumerate(self.test_loader):
+                wl_y_has_nan = torch.isnan(wl_y).any().item()
+                if wl_y_has_nan:
+                    continue
                 wl_x = wl_x.float().to(self.device)
                 wl_y = wl_y.float().to(self.device)
                 # encoder - decoder
                 wl_outputs = self.models_dic['water_level'](wl_x)
                 outputs = wl_outputs
-                if wd_x is not None:
+                if not torch.isnan(wd_x).any().item():
                     wd_x = wd_x.float().to(self.device)
                     wd_outputs = self.models_dic['water_discharge'](wd_x)
                     outputs = torch.cat([outputs, wd_outputs], dim=-1)
-                if rf_x is not None:
+                if not torch.isnan(rf_x).any().item():
                     rf_x = rf_x.float().to(self.device)
                     rf_outputs = self.models_dic['water_discharge'](rf_x)
                     outputs = torch.cat([outputs, rf_outputs], dim=-1)
@@ -272,3 +289,4 @@ class Exp_MeKong(Exp_Basic):
         np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
         np.save(folder_path + 'pred.npy', preds)
         np.save(folder_path + 'true.npy', trues)
+        return mse, mae

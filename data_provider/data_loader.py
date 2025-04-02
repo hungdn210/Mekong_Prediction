@@ -10,8 +10,8 @@ warnings.filterwarnings('ignore')
 
 class Dataset_mekong_phase_a(Dataset):
     def __init__(self, args, root_path, flag='train', size=None,
-                 features='S', data_path='Stung Treng.csv',
-                 target='Value', scale=True, timeenc=0, freq='h'):
+                 features='M', data_path='Stung Treng.csv',
+                 target='Value', scale=True, timeenc=0, freq='d'):
         # size [seq_len, label_len, pred_len]
         self.args = args
         if size == None:
@@ -38,20 +38,16 @@ class Dataset_mekong_phase_a(Dataset):
         self.__read_data__()
 
     def __read_data__(self):
-        self.scaler = StandardScaler()
+        self.scaler_wl = StandardScaler()
+        self.scaler_wd = StandardScaler()
+        self.scaler_rf = StandardScaler()
+
         df_raw = pd.read_csv(os.path.join(self.root_path,
                                           self.data_path))
 
         """
-        df_raw.columns: ['Timestamp', 'Water.Level', 'Discharge.Daily', 'Rainfall.Manual']
+        df_raw.columns: ['Timestamp', 'Discharge.Daily', 'Water.Level', 'Rainfall.Manual']
         """
-
-        # cols = list(df_raw.columns)
-        # cols.remove(self.target)
-        # cols.remove('Timestamp')
-        # df_raw = df_raw[['Timestamp'] + [self.target]]
-
-        # todo: check the length of test
         num_vali = int(0.1 * len(df_raw))
         num_test = int(0.2 * len(df_raw))
         num_train = len(df_raw) - num_test - num_vali
@@ -60,15 +56,24 @@ class Dataset_mekong_phase_a(Dataset):
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
 
-        cols_data = df_raw.columns[1:]
-        df_data = df_raw[cols_data]
+        wl_df_data = df_raw[['Water.Level']]
+        wd_df_data = df_raw[['Discharge.Daily']]
+        rf_df_data = df_raw[['Rainfall.Manual']]
 
         if self.scale:
-            train_data = df_data[border1s[0]:border2s[0]]
-            self.scaler.fit(train_data.values)
-            data = self.scaler.transform(df_data.values)
+            wl_train_data = wl_df_data[border1s[0]:border2s[0]]
+            self.scaler_wl.fit(wl_train_data.values)
+            wl_data = self.scaler_wl.transform(wl_df_data.values)
+            wd_train_data = wd_df_data[border1s[0]:border2s[0]]
+            self.scaler_wd.fit(wd_train_data.values)
+            wd_data = self.scaler_wd.transform(wd_df_data.values)
+            rf_train_data = rf_df_data[border1s[0]:border2s[0]]
+            self.scaler_rf.fit(rf_train_data.values)
+            rf_data = self.scaler_rf.transform(rf_df_data.values)
         else:
-            data = df_data.values
+            wl_data = wl_df_data.values
+            wd_data = wd_df_data.values
+            rf_data = rf_df_data.values
 
         df_stamp = df_raw[['Timestamp']][border1:border2]
         df_stamp['Timestamp'] = pd.to_datetime(df_stamp['Timestamp'])
@@ -84,8 +89,10 @@ class Dataset_mekong_phase_a(Dataset):
         else:
             raise NotImplementedError
 
-        self.data_x = data[border1:border2]
-        self.data_y = data[border1:border2]
+        self.wl_data_x = wl_data[border1:border2]
+        self.wl_data_y = wl_data[border1:border2]
+        self.wd_data_x = wd_data[border1:border2]
+        self.rf_data_x = rf_data[border1:border2]
         self.data_stamp = data_stamp
 
     def __getitem__(self, index):
@@ -95,41 +102,25 @@ class Dataset_mekong_phase_a(Dataset):
         r_end = r_begin + self.label_len + self.pred_len
 
         # water_level, water_discharge, rainfall
-        wl_x = self.data_x[:, 0:1][s_begin:s_end]
-        wl_y = self.data_y[:, 0:1][r_begin:r_end]
-        wd_x = self.data_x[:, 1:2][s_begin:s_end]
-        rf_x = self.data_x[:, 2:3][s_begin:s_end]
-
-        if pd.isna(wl_x).any():
-            wl_x = None
-        if pd.isna(wd_x).any():
-            wd_x = None
-        if pd.isna(rf_x).any():
-            rf_x = None
+        wl_x = self.wl_data_x[s_begin:s_end]
+        wl_y = self.wl_data_y[r_begin:r_end]
+        wd_x = self.wd_data_x[s_begin:s_end]
+        rf_x = self.rf_data_x[s_begin:s_end]
         return wl_x, wd_x, rf_x, wl_y
 
     def __len__(self):
-        return len(self.data_x) - self.seq_len - self.pred_len + 1
+        return len(self.wl_data_x) - self.seq_len - self.pred_len + 1
 
     def inverse_transform(self, data):
-        return self.scaler.inverse_transform(data)
+        return self.scaler_wl.inverse_transform(data)
 
 
 class Dataset_mekong(Dataset):
     def __init__(self, args, root_path, flag='train', size=None,
-                 features='S', data_path='Stung Treng.csv',
-                 target='Value', scale=True, timeenc=0, freq='h'):
+                 features='M', data_path='Stung Treng.csv',
+                 target='Value', scale=True, timeenc=0, freq='d'):
         # size [seq_len, label_len, pred_len]
         self.args = args
-        # info
-        """
-        self.train_start_date = '1992-09-01T00:00Z'
-        self.train_end_date = '2016-08-31T00:00Z'
-        self.vali_start_date = '2016-09-01T00:00Z'
-        self.vali_end_date = '2020-08-31T00:00Z'
-        self.test_start_date = '2020-09-01T00:00Z'
-        self.test_end_date = '2023-08-31T00:00Z'
-        """
         if size == None:
             self.seq_len = 24 * 4 * 4
             self.label_len = 24 * 4
@@ -157,34 +148,21 @@ class Dataset_mekong(Dataset):
         self.scaler = StandardScaler()
         df_raw = pd.read_csv(os.path.join(self.root_path,
                                           self.data_path))
-
-        '''
-        df_raw.columns: ['date', ...(other features), target feature]
-        '''
-        # cols = list(df_raw.columns)
-        # cols.remove(self.target)
-        # cols.remove('Timestamp')
-        df_raw = df_raw[['Timestamp'] + [self.target]]
-
         """
-        Training Range: 87660, 24 years, 1992-09-01 00:00:00+00:00 to 2016-08-31 00:00:00+00:00
-        Validation Range: 14610, 4 years, 2016-09-01 00:00:00+00:00 to 2020-08-31 00:00:00+00:00
-        Test Range: 10950, 3 years, 2020-09-01 00:00:00+00:00 to 2023-08-31 00:00:00+00:00
+        df_raw.columns: ['Timestamp', 'Discharge.Daily', 'Water.Level', 'Rainfall.Manual']
         """
-        num_vali = 1461
-        num_test = 1095
-        num_train = 8766
-        # num_train = len(df_raw) - num_test - num_vali
+        df_raw = df_raw[['Timestamp'] + ['Water.Level']]
+
+        num_vali = int(0.1 * len(df_raw))
+        num_test = int(0.2 * len(df_raw))
+        num_train = len(df_raw) - num_test - num_vali
         border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
         border2s = [num_train, num_train + num_vali, len(df_raw)]
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
 
-        if self.features == 'M' or self.features == 'MS':
-            cols_data = df_raw.columns[1:]
-            df_data = df_raw[cols_data]
-        elif self.features == 'S':
-            df_data = df_raw[[self.target]]
+        cols_data = df_raw.columns[1:]
+        df_data = df_raw[cols_data]
 
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]

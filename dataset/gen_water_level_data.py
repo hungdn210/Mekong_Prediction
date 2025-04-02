@@ -1,8 +1,7 @@
 import os
 import pandas as pd
-import data_repository
 
-folder_path = f"{data_repository.FILLED_GAPS_DATA}/{data_repository.WATER_DISCHARGE_CATEGORY}"
+folder_path = "Filled_Gaps_Data/Water.Level"
 all_dfs = []
 
 # 遍历文件夹中的CSV文件
@@ -23,4 +22,4 @@ merged_df = pd.concat(all_dfs, axis=1)
 
 # 重置索引使时间列可见
 merged_df = merged_df.reset_index()
-merged_df.to_csv("Water_Discharge_Data.csv", index=False)
+merged_df.to_csv("Water_Level_Data.csv", index=False)

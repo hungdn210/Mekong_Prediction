@@ -1,73 +1,68 @@
-from utils.configs import BasicConfigs
 from utils.constants import Constants
-from exp.exp_mekong import Exp_MeKong
+from utils.print_args import print_args
+from exp.exp_mekong import Exp_MeKong as Exp_MeKong_initial
 from exp.exp_mekong_phase_a import Exp_MeKong as Exp_MeKong_phase_a
 import time
+import torch
+import os
+import argparse
+import yaml
+import random
+import numpy as np
+
+
+def parse_args():
+    # base configs（from YAML file）
+    base_parser = argparse.ArgumentParser()
+    base_parser.add_argument('-c', '--config', type=str, default='configs/base_configs.yaml')
+    base_args, _ = base_parser.parse_known_args()
+
+    # load YAML configs
+    with open(base_args.config, 'r') as f:
+        yaml_config = yaml.safe_load(f)
+
+    # full configs（combine YAML and CMD configs
+    parser = argparse.ArgumentParser(description='Water Level Prediction')
+    # task setting
+    parser.add_argument('--random_seed', type=int, default=42, help='random seed')
+    parser.add_argument('--model', type=str, default='Linear')
+    parser.add_argument('--station', type=str, default='all')
+    parser.add_argument('--is_training', type=int, default=1)
+    parser.add_argument('--run_initial', action='store_true', help='initial', default=False)
+    parser.add_argument('--run_phase_a', action='store_true', help='phase a', default=False)
+    parser.add_argument('--verbose', type=int, default=1)
+    parser.add_argument('--des', type=str, default='exp')
+    # model params
+    parser.add_argument('--train_epochs', type=int, default=100)
+    parser.add_argument('--learning_rate', type=float, default=0.001)
+    parser.add_argument('--e_layers', type=int, default=1)
+    parser.add_argument('--d_layers', type=int, default=1)
+    parser.add_argument('--d_model', type=int, default=512)
+    parser.add_argument('--d_ff', type=int, default=2048)
+    parser.add_argument('--n_heads', type=int, default=8)
+    parser.add_argument('--factor', type=int, default=1)
+
+    parser.set_defaults(**yaml_config)  # load YAML as default
+    return parser.parse_args()
 
 
 class MeKongWaterLevelPrediction:
-    def __init__(self):
-        self.args = BasicConfigs()
-        self.constants = Constants()
+    def __init__(self, args):
+        self.args = args
+        # all stations list
+        self._all_stations = Constants().all_stations
+        self._verbose = args.verbose
 
-        # all single station list
-        self._all_stations = self.constants.all_stations
-        # cross station
-        self._cross_list = self.constants.cross_list
+    def _run_single_station(self, station, exp):
+        if station not in self._all_stations:
+            raise ValueError(f"Station {station} not found.")
 
-        if self.args.use_gpu and self.args.use_multi_gpu:
-            self.args.devices = self.args.devices.replace(' ', '')
-            device_ids = self.args.devices.split(',')
-            self.args.device_ids = [int(id_) for id_ in device_ids]
-            self.args.gpu = self.args.device_ids[0]
-
-        if self.args.use_gpu:
-            print('Use GPU: cuda:{}'.format(self.args.gpu))
-        else:
-            print('Use CPU')
-
-    def _print_properties(self, obj):
-        cls = type(obj)
-
-        properties = {}
-        for name in dir(cls):
-            attr = getattr(cls, name)
-            if isinstance(attr, property):
-                try:
-                    value = getattr(obj, name)
-                    properties[name] = value
-                except Exception as e:
-                    properties[name] = f"<Error: {str(e)}>"
-
-        for name, value in properties.items():
-            print(f"  - {name}: {value}")
-
-    def station_run(self, station1, station2=None, verbose=True):
-        if station2 is None:
-            station2 = ''
-        # data setting
-        data = 'MeKong'
-        data1_path = f'{station1}.csv'
-        data2_path = ''
-        if not station2 == '':
-            data = 'MeKong_Cross'
-            data2_path = f'{station2}.csv'
-            if verbose:
-                print(f"Running cross station {station1} and {station2}")
-        else:
-            if verbose:
-                print(f"Running single station {station1}")
-        self.args.data = data
-        self.args.data1_path = data1_path
-        self.args.data2_path = data2_path
+        self.args.data_path = station + '.csv'
+        print(f"Running {station} station")
         # exp setting
-        exp = Exp_MeKong_phase_a(self.args, verbose)
-        setting = '{}_{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}'.format(
+        setting = '{}_{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}'.format(
             self.args.model,
-            self.args.data,
-            station1.replace(' ', ''),
-            station2.replace(' ', ''),
-            self.args.features,
+            station.replace(' ', ''),
             self.args.seq_len,
             self.args.label_len,
             self.args.pred_len,
@@ -81,45 +76,67 @@ class MeKongWaterLevelPrediction:
             self.args.distil,
             self.args.des
         )
-        if verbose:
-            print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>\n'.format(setting))
-        exp.train(setting)
-        if verbose:
-            print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n'.format(setting))
-        exp.test(setting)
+        if self.args.is_training:
+            if self._verbose:
+                print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>\n'.format(setting))
+            exp.train(setting)
+            if self._verbose:
+                print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n'.format(setting))
+            mse, mae = exp.test(setting)
+            torch.cuda.empty_cache()
+        else:
+            if self._verbose:
+                print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n'.format(setting))
+            mse, mae = exp.test(setting)
+            torch.cuda.empty_cache()
+        return mse, mae
 
-    def run_all_stations(self):
-        self.args.model_default_configs(self.args.model)
-        self._print_properties(self.args)
+    def _run_tasks(self, phase, exp):
+        if self.args.station == 'all':
+            print(f"Running all stations in {phase}")
+            files = os.listdir(self.args.root_path)
+            station_list = [file.split('.csv')[0] for file in files if file.endswith('.csv')]
+            start_time = time.time()
+            for i, station in enumerate(station_list):
+                task_start_time = time.time()
+                mse, mae = self._run_single_station(station, exp)
+                duration = time.time() - task_start_time
+                overall_duration = time.time() - start_time
+                print(f"tasks: {i + 1} / {len(station_list)}, "
+                      f"duration: {duration:.2f}s, "
+                      f"overall time: {overall_duration:.2f}s, "
+                      f"mse: {mse:.4f}, mae: {mae:.4f}")
+            print(f"Run all stations in {phase} done")
+        else:
+            print(f"Running station {self.args.station} in {phase}")
+            task_start_time = time.time()
+            mse, mae = self._run_single_station(self.args.station, exp)
+            duration = time.time() - task_start_time
+            print(f"duration: {duration:.2f}s, "
+                  f"mse: {mse:.4f}, mae: {mae:.4f}")
+            print(f"Run station {self.args.station} in {phase} done")
 
-        all_tasks = []
-        for station1 in self._all_stations:
-            station2 = None
-            all_tasks.append((station1, station2))
-
-        print(f"Start to run {len(self._all_stations)} stations")
-        print(f"Overall {len(all_tasks)} tasks")
-        start_time = time.time()
-        task_time = None
-        all_duration = 0
-        completed_count = 0
-        for station1, station2 in all_tasks:
-            # run each task
-            self.station_run(station1, station2, verbose=False)
-            # count completed tasks, calc time
-            completed_count += 1
-            if task_time is None:
-                task_time = start_time
-            duration = time.time() - task_time
-            all_duration = time.time() - start_time
-            print(f"Progress: {completed_count}/{len(all_tasks)}, "
-                  f"task duration: {duration:.2f}s, "
-                  f"all duration: {all_duration:.2f}s\n")
-            task_time = time.time()
-
-        print(f"All tasks finished! All time consumed: {all_duration:.2f}s")
+    def run(self):
+        if self.args.run_initial:
+            args.data = 'Initial'
+            exp = Exp_MeKong_initial(self.args, self._verbose)
+            self._run_tasks('Initial', exp)
+        if self.args.run_phase_a:
+            args.data = 'PhaseA'
+            exp = Exp_MeKong_phase_a(self.args, self._verbose)
+            self._run_tasks('Phase A', exp)
 
 
 if __name__ == '__main__':
-    forecast = MeKongWaterLevelPrediction()
-    forecast.station_run('Chiang Saen')
+    args = parse_args()
+    args.use_gpu = torch.cuda.is_available()
+    args.gpu = torch.cuda.current_device() if args.use_gpu else -1
+    print(torch.cuda.is_available())  # should be True
+    print(torch.cuda.get_device_name(0)) 
+    random.seed(args.random_seed)
+    torch.manual_seed(args.random_seed)
+    np.random.seed(args.random_seed)
+    print_args(args)
+
+    forcast = MeKongWaterLevelPrediction(args)
+    forcast.run()

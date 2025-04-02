@@ -3,7 +3,7 @@ import torch
 from models import Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer, \
     Informer, LightTS, Pyraformer, PatchTST, MICN, FiLM, iTransformer, \
     Koopa, TiDE, FreTS, TimeMixer, TSMixer, SegRNN, TemporalFusionTransformer, SCINet, TimeXer, \
-    Linear, LSTM
+    Linear, LSTM, RLinear
 
 
 class Exp_Basic(object):
@@ -34,7 +34,8 @@ class Exp_Basic(object):
             "SCINet": SCINet,
             'TimeXer': TimeXer,
             'Linear': Linear,
-            'LSTM': LSTM
+            'LSTM': LSTM,
+            'RLinear': RLinear
         }
 
     def _build_model(self):
@@ -43,11 +44,20 @@ class Exp_Basic(object):
 
     def _acquire_device(self):
         if self.args.use_gpu:
-            os.environ["CUDA_VISIBLE_DEVICES"] = str(
-                self.args.gpu) if not self.args.use_multi_gpu else self.args.devices
-            device = torch.device('cuda:{}'.format(self.args.gpu))
+            if torch.cuda.is_available():
+                os.environ["CUDA_VISIBLE_DEVICES"] = str(
+                    self.args.gpu) if not self.args.use_multi_gpu else self.args.devices
+                device = torch.device('cuda:{}'.format(self.args.gpu))
+                print('Use GPU: cuda:{}'.format(self.args.gpu))
+            elif torch.backends.mps.is_available():
+                device = torch.device("mps")
+                print('Use MPS')
+            else:
+                device = torch.device("cpu")
+                print('Use CPU')
         else:
             device = torch.device('cpu')
+            print('Use CPU')
         return device
 
     def _get_data(self):

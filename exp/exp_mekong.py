@@ -1,5 +1,3 @@
-import gc
-
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
@@ -48,34 +46,14 @@ class Exp_MeKong(Exp_Basic):
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(self.vali_loader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float()
-
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
-
-                # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
                 # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                else:
-                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                f_dim = -1 if self.args.features == 'MS' else 0
-                outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-
+                outputs = self.model(batch_x)
                 pred = outputs.detach().cpu()
                 true = batch_y.detach().cpu()
-
                 loss = criterion(pred, true)
-
                 total_loss.append(loss)
         total_loss = np.average(total_loss)
         self.model.train()
-
-        del pred, true
-        gc.collect()
         return total_loss
 
     def train(self, setting):
@@ -83,8 +61,8 @@ class Exp_MeKong(Exp_Basic):
         self.vali_data, self.vali_loader = self._get_data(flag='val')
         self.test_data, self.test_loader = self._get_data(flag='test')
         path = os.path.join(self.args.checkpoints, setting)
-        if not os.path.exists(path):
-            os.makedirs(path)
+        if not os.path.exists(path + '/initial/'):
+            os.makedirs(path + '/initial/')
 
         time_now = time.time()
 
@@ -93,9 +71,6 @@ class Exp_MeKong(Exp_Basic):
 
         model_optim = self._select_optimizer()
         criterion = self._select_criterion()
-
-        if self.args.use_amp:
-            scaler = torch.cuda.amp.GradScaler()
 
         for epoch in range(self.args.train_epochs):
             iter_count = 0
@@ -108,31 +83,11 @@ class Exp_MeKong(Exp_Basic):
                 model_optim.zero_grad()
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().to(self.device)
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
-
-                # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
 
                 # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-
-                        f_dim = -1 if self.args.features == 'MS' else 0
-                        outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                        batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-                        loss = criterion(outputs, batch_y)
-                        train_loss.append(loss.item())
-                else:
-                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-
-                    f_dim = -1 if self.args.features == 'MS' else 0
-                    outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                    batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-                    loss = criterion(outputs, batch_y)
-                    train_loss.append(loss.item())
+                outputs = self.model(batch_x)
+                loss = criterion(outputs, batch_y)
+                train_loss.append(loss.item())
 
                 if self.verbose:
                     if (i + 1) % 100 == 0:
@@ -142,14 +97,8 @@ class Exp_MeKong(Exp_Basic):
                         print('\tspeed: {:.4f}s/iter; left time: {:.4f}s'.format(speed, left_time))
                         iter_count = 0
                         time_now = time.time()
-
-                if self.args.use_amp:
-                    scaler.scale(loss).backward()
-                    scaler.step(model_optim)
-                    scaler.update()
-                else:
-                    loss.backward()
-                    model_optim.step()
+                loss.backward()
+                model_optim.step()
             if self.verbose:
                 print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
@@ -158,7 +107,7 @@ class Exp_MeKong(Exp_Basic):
             if self.verbose:
                 print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
                     epoch + 1, train_steps, train_loss, vali_loss, test_loss))
-            early_stopping(vali_loss, self.model, path)
+            early_stopping(vali_loss, self.model, path + '/initial/')
             if early_stopping.early_stop:
                 if self.verbose:
                     print("Early stopping")
@@ -166,16 +115,8 @@ class Exp_MeKong(Exp_Basic):
 
             adjust_learning_rate(model_optim, epoch + 1, self.args, self.verbose)
 
-        best_model_path = path + '/' + 'checkpoint.pth'
+        best_model_path = path + '/initial/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
-
-        del train_loss, vali_loss, test_loss
-        del early_stopping
-        del self.train_data, self.train_loader
-        del self.vali_data, self.vali_loader
-        del self.test_data, self.test_loader
-        del self.model
-        gc.collect()
 
     def test(self, setting, test=0):
         self.train_data, self.train_loader = self._get_data(flag='train')
@@ -185,11 +126,11 @@ class Exp_MeKong(Exp_Basic):
         if self.verbose:
             print('loading model')
         self.model = self._build_model().to(self.device)
-        self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
+        self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'initial', 'checkpoint.pth')))
 
         preds = []
         trues = []
-        folder_path = './test_results/' + setting + '/'
+        folder_path = './test_results/' + setting + '/initial/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
@@ -198,32 +139,14 @@ class Exp_MeKong(Exp_Basic):
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(self.test_loader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().to(self.device)
-
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
-
-                # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
                 # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                else:
-                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-
-                f_dim = -1 if self.args.features == 'MS' else 0
-                outputs = outputs[:, -self.args.pred_len:, :]
-                batch_y = batch_y[:, -self.args.pred_len:, :].to(self.device)
+                outputs = self.model(batch_x)
                 outputs = outputs.detach().cpu().numpy()
                 batch_y = batch_y.detach().cpu().numpy()
                 if self.test_data.scale and self.args.inverse:
                     shape = outputs.shape
                     outputs = self.test_data.inverse_transform(outputs.reshape(shape[0] * shape[1], -1)).reshape(shape)
                     batch_y = self.test_data.inverse_transform(batch_y.reshape(shape[0] * shape[1], -1)).reshape(shape)
-        
-                outputs = outputs[:, :, f_dim:]
-                batch_y = batch_y[:, :, f_dim:]
 
                 pred = outputs
                 true = batch_y
@@ -249,14 +172,14 @@ class Exp_MeKong(Exp_Basic):
             print('test shape:', preds.shape, trues.shape)
 
         # result save
-        folder_path = './results/' + setting + '/'
+        folder_path = './results/' + setting + '/initial/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
         mae, mse, rmse, mape, mspe = metric(preds, trues)
         if self.verbose:
             print('mse:{}, mae:{}'.format(mse, mae))
-        f = open("result_mekong.txt", 'a')
+        f = open("result_mekong_initial.txt", 'a')
         f.write(setting + "  \n")
         f.write('mse:{}, mae:{}'.format(mse, mae))
         f.write('\n')
@@ -266,11 +189,4 @@ class Exp_MeKong(Exp_Basic):
         np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
         np.save(folder_path + 'pred.npy', preds)
         np.save(folder_path + 'true.npy', trues)
-
-        del preds, trues
-        del mae, mse, rmse, mape, mspe
-        del self.train_data, self.train_loader
-        del self.vali_data, self.vali_loader
-        del self.test_data, self.test_loader
-        del self.model
-        gc.collect()
+        return mse, mae

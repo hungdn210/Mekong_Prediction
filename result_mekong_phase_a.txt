@@ -1,0 +1,78 @@
+RLinear_BanChot_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:1.8882683515548706, mae:0.8514402508735657
+
+RLinear_BanHuaiKhayuong_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:1.8326624631881714, mae:0.7054879665374756
+
+RLinear_BanHuaiYanoMai_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.022431127727031708, mae:0.09699226915836334
+
+RLinear_BanKengdone_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:3.198579788208008, mae:1.0463244915008545
+
+RLinear_BanNaLuang_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.3693843483924866, mae:0.33560076355934143
+
+RLinear_BanNongKiang_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:1.2836384773254395, mae:0.5587341785430908
+
+RLinear_BanPakHuai_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.3876846134662628, mae:0.27649909257888794
+
+RLinear_BanPakKanhoung_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.6840009093284607, mae:0.4760648012161255
+
+RLinear_BanTadTon_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.4348521828651428, mae:0.2759600579738617
+
+RLinear_BanThaMaiLiam_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.2367609441280365, mae:0.31369146704673767
+
+RLinear_BanThaTon_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.08091456443071365, mae:0.1730993688106537
+
+RLinear_Cau14(BuonBur)_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:1.5683331489562988, mae:1.095746636390686
+
+RLinear_Chaktomuk_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.14822974801063538, mae:0.2478167861700058
+
+RLinear_ChiangKhan_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:1.147122859954834, mae:0.6949360370635986
+
+RLinear_ChiangSaen_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.7476887702941895, mae:0.5626412630081177
+
+RLinear_DucXuyen_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:2.2479662895202637, mae:1.2912745475769043
+
+RLinear_KhongChiam_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:1.1186730861663818, mae:0.6670904159545898
+
+RLinear_KompongCham_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.7599716186523438, mae:0.5750338435173035
+
+RLinear_Kontum_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:8.389579772949219, mae:2.759619951248169
+
+RLinear_Mukdahan_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.7498417496681213, mae:0.557974100112915
+
+RLinear_NakhonPhanom_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.6777937412261963, mae:0.5542307496070862
+
+RLinear_NongKhai_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.8353278636932373, mae:0.6028401255607605
+
+RLinear_Pakse_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.8943588733673096, mae:0.6057441830635071
+
+RLinear_StungTreng_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.5591123700141907, mae:0.5195029377937317
+
+RLinear_VientianeKM4_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.897007942199707, mae:0.6271113753318787
+
+RLinear_Yasothon_sl96_ll0_pl12_dm512_nh8_el1_dl1_df2048_fc1_ebtimeF_dtTrue_exp  
+mse:0.39278918504714966, mae:0.37544354796409607
+
